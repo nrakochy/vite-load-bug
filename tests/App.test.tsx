@@ -1,10 +1,10 @@
 import { describe, test } from "vitest";
 // import { render, screen } from "./test-utils";
-import { render, screen } from "@testing-library/react";
+import { render, renderHook, screen } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
-import { Provider } from "react-redux";
+import { Provider, useSelector } from "react-redux";
 import App from "../src/App";
-import { createReduxStore } from "../src/redux/store";
+import { RootState, createReduxStore, useAppSelector } from "../src/redux/store";
 import ErrorBoundary from "../src/components/ErrorBoundary";
 
 describe("App component", () => {
@@ -16,8 +16,6 @@ describe("App component", () => {
 
   test("renders correctly", () => {
     const store = createReduxStore();
-    console.log(store);
-
     const component = (
       <Provider store={store}>
         <MemoryRouter>
@@ -46,5 +44,31 @@ describe("App component", () => {
     render(component);
     const errorElement = screen.getByRole("heading");
     expect(errorElement).toBeInTheDocument();
+  });
+});
+
+describe("Selector hook", () => {
+  /*
+  TODO: Find out the reason of the following error:
+  stderr | tests/App.test.tsx > App component > renders with Error
+  Error: Uncaught [Error: could not find react-redux context value; please ensure the component is wrapped in a <Provider>]
+  */
+
+  test("renders selectors as expected", () => {
+    const store = createReduxStore({ courseDetails: true });
+    const wrapper = () => (
+      <Provider store={store}>
+        <MemoryRouter />
+      </Provider>
+    );
+
+    const selectExample = (state: RootState) => state.courseDetails;
+
+    const { result } = renderHook(() => useAppSelector(selectExample), {
+      wrapper,
+    });
+
+    console.info("STORE", store.getState());
+    expect(result.current).toBe(true);
   });
 });
